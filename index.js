@@ -22,8 +22,14 @@ app.use(cors({
   origin: '*' // Replace with your frontend URL if different
 }));
 
+
+
+
 // Connect to MongoDB
 connectDB();
+
+
+
 
 // Set up multer for handling file uploads
 const storage = multer.memoryStorage();
@@ -1172,90 +1178,6 @@ app.put('/api/user/details', upload.none(), async (req, res) => {
 });
 
 
-
-
-
-
-const wss = new WebSocket.Server({ port:10000 })
-
-console.log('WebSocket server is running on ws://0.0.0.0:1000');
-
-wss.on('connection', (ws) => {
-  console.log('Client connected');
-
-  ws.on('message', (message) => {
-    // If the message is a Buffer, convert it to a string
-    const messageString = message instanceof Buffer ? message.toString() : message;
-
-    try {
-      // Parse the message string into a JSON object
-      const parsedMessage = JSON.parse(messageString);
-
-      // Extract floor, ward, and messageContent from the parsed message
-      const { floor1, ward, message: messageContent,device,name1, content,room,target,formattedTime,formattedTime1} = parsedMessage;
-   
-      // Validate if both floor and ward are provided
-      if (floor1 && ward) {
-        console.log('Valid message received:');
-        console.log('Message:', messageContent);
-        console.log('Floor:', floor1);
-        console.log('Ward:', device);
-
-        // Broadcast the message to all connected clients except the sender
-        wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send(
-              JSON.stringify({
-                status: 'Message forwarded',
-                floor1,
-                ward,
-                message: messageContent,
-                device,
-                name1,
-                content,
-                room,
-                target,
-                formattedTime,
-                formattedTime1,
-              })
-            );
-          }
-        });
-
-        // Send a success response back to the sender
-        ws.send(
-          JSON.stringify({
-            status: 'Message received and forwarded successfully',
-            floor1,
-            ward,
-            message: messageContent,
-            device,
-            name1,
-            content,
-            target,
-            formattedTime,
-            formattedTime1,
-          })
-        );
-      } else {
-        console.log('Invalid message. Floor and ward are required.');
-
-        // Send a failure response to the sender
-        ws.send(
-          JSON.stringify({ status: 'Invalid message. Floor and ward are required.' })
-        );
-      }
-    } catch (error) {
-      console.error('Error parsing message:', error);
-
-      // Send an error message to the sender
-      ws.send(JSON.stringify({ status: 'Error parsing the message.' }));
-    }
-  });
-
-  // Send an initial message to the newly connected client
-  ws.send(JSON.stringify({ status: 'Connected to WebSocket server' }));
-});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
